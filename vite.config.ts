@@ -6,8 +6,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
     plugins: [react()],
-    // Base relative path ensures assets work on GitHub Pages regardless of repo name
-    base: './', 
+    // Base must match your GitHub repository name with slashes
+    base: '/ultraship-ems/', 
     define: {
       // Polyfill process.env.API_KEY for the Gemini SDK
       'process.env.API_KEY': JSON.stringify(env.API_KEY)

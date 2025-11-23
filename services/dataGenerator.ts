@@ -28,9 +28,10 @@ export const fetchInitialData = async (): Promise<Employee[]> => {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     // We request a specific JSON structure to match our TypeScript interface
+    // Reduced count to 20 and explicitly requested NO base64/avatars to prevent token limit truncation
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: "Generate a realistic dataset of 30 employees for a tech company. Include varied names, ages (22-60), realistic roles, departments, emails, phone numbers, locations (global cities), join dates (2018-2024), statuses, and skills (as subjects). Do not include attendance.",
+      contents: "Generate a realistic dataset of 20 employees for a tech company. Include varied names, ages (22-60), realistic roles, departments, emails, phone numbers, locations (global cities), join dates (2018-2024), statuses, and skills (as subjects). Do NOT include attendance or avatar fields (avatars are handled client-side). Keep the response concise to ensure valid JSON.",
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -55,7 +56,13 @@ export const fetchInitialData = async (): Promise<Employee[]> => {
       },
     });
 
-    const rawData = JSON.parse(response.text || "[]");
+    let rawData: any[] = [];
+    try {
+        rawData = JSON.parse(response.text || "[]");
+    } catch (parseError) {
+        console.warn("Gemini JSON parse failed (likely truncated), using fallback data.", parseError);
+        return FALLBACK_DATA;
+    }
     
     // Map and sanitize to ensure it matches our strict Enums where possible, or defaults
     return rawData.map((item: any, index: number) => ({
@@ -74,7 +81,7 @@ export const fetchInitialData = async (): Promise<Employee[]> => {
     }));
 
   } catch (error) {
-    console.error("Gemini data generation failed:", error);
+    console.warn("Gemini data generation failed (network or API error), using fallback data:", error);
     return FALLBACK_DATA;
   }
 };

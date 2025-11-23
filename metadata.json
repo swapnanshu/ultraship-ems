@@ -1,0 +1,5 @@
+{
+  "name": "UltraShip Employee Hub",
+  "description": "A high-performance, aesthetically pleasing employee management dashboard featuring grid/tile views, simulated GraphQL backend logic, and role-based access control.",
+  "requestFramePermissions": []
+}

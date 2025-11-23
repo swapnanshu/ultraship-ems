@@ -1,0 +1,48 @@
+import React from 'react';
+import { 
+  Grid, 
+  List, 
+  MoreVertical, 
+  Edit, 
+  Flag, 
+  Trash2, 
+  ChevronDown, 
+  Search,
+  User,
+  LogOut,
+  Menu,
+  X,
+  LayoutDashboard,
+  Users,
+  Settings,
+  Briefcase,
+  ChevronRight,
+  Filter,
+  ArrowUp,
+  ArrowDown,
+  AlertTriangle
+} from 'lucide-react';
+
+export const Icons = {
+  Grid,
+  List,
+  MoreVertical,
+  Edit,
+  Flag,
+  Trash2,
+  ChevronDown,
+  Search,
+  User,
+  LogOut,
+  Menu,
+  X,
+  Dashboard: LayoutDashboard,
+  Users,
+  Settings,
+  Briefcase,
+  ChevronRight,
+  Filter,
+  ArrowUp,
+  ArrowDown,
+  AlertTriangle
+};

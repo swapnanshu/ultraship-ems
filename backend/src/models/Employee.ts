@@ -37,7 +37,7 @@ export interface IEmployee extends Document {
 }
 
 const EmployeeSchema: Schema = new Schema({
-  employeeId: { type: String, required: true, unique: true },
+  employeeId: { type: String, unique: true },
   name: { type: String, required: true },
   age: { type: Number, required: true, min: 18, max: 100 },
   jobTitle: { type: String, required: true },

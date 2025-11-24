@@ -1,5 +1,5 @@
 // Data Models matching the prompt requirements
-export enum Role {
+export enum UserRole {
   ADMIN = 'ADMIN',
   EMPLOYEE = 'EMPLOYEE'
 }
@@ -21,16 +21,18 @@ export enum Status {
 
 export interface Employee {
   id: string;
+  employeeId: string;
   name: string;
   age: number;
-  role: string; // Job Title
+  jobTitle: string;
+  userRole: UserRole;
   department: Department;
   email: string;
   phone: string;
   location: string;
   joinDate: string;
   status: Status;
-  subjects: string[]; // Skills/Subjects
+  subjects: string[];
   avatar?: string;
   isFlagged?: boolean;
 }

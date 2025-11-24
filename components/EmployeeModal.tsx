@@ -1,6 +1,7 @@
 import React from 'react';
 import { Employee, Status } from '../types';
 import { Icons } from './Icons';
+import AvatarIcon from './AvatarIcon';
 
 interface EmployeeModalProps {
   employee: Employee | null;
@@ -29,26 +30,25 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ employee, onClose }) => {
           {/* Header Image */}
           <div className="h-32 bg-gradient-to-r from-primary-600 to-indigo-600 relative">
             <div className="absolute -bottom-12 left-8">
-               <img 
-                 src={employee.avatar} 
-                 alt={employee.name} 
-                 className="h-24 w-24 rounded-2xl border-4 border-white shadow-lg bg-white object-cover" 
-               />
+               {/* Avatar */}
+          <div className="flex-shrink-0">
+            <AvatarIcon name={employee.name} size={96} />
+          </div>     
             </div>
           </div>
 
           <div className="px-8 pt-16 pb-8">
             <div className="flex justify-between items-start">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">{employee.name}</h2>
-                <p className="text-primary-600 font-medium">{employee.role}</p>
+              <div className="ml-6">
+                <h3 className="text-2xl font-bold text-gray-900">{employee.name}</h3>
+                <p className="text-sm text-gray-500 mt-1">{employee.jobTitle}</p>
+                <p className="text-xs text-gray-400 mt-1 font-mono">ID: {employee.employeeId}</p>
                 <div className="flex items-center gap-2 mt-2">
                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       employee.status === Status.ACTIVE ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                    }`}>
                      {employee.status}
                    </span>
-                   <span className="text-xs text-gray-500">• {employee.id}</span>
                 </div>
               </div>
             </div>

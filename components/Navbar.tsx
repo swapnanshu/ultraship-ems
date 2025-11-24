@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Icons } from './Icons';
-import { Role } from '../types';
+import { UserRole } from '../types';
 
 interface NavbarProps {
-  currentUserRole: Role;
+  currentUserRole: UserRole;
   onLogout: () => void;
-  toggleRole: () => void;
+  onToggleRole: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ currentUserRole, onLogout, toggleRole }) => {
+const Navbar: React.FC<NavbarProps> = ({ currentUserRole, onLogout, onToggleRole }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
 
@@ -78,8 +78,8 @@ const Navbar: React.FC<NavbarProps> = ({ currentUserRole, onLogout, toggleRole }
           <div className="hidden md:flex items-center gap-4">
              {/* Role Toggle for Demo */}
              <button 
-              onClick={toggleRole}
-              className={`px-3 py-1 rounded-full text-xs font-semibold border ${currentUserRole === Role.ADMIN ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-green-100 text-green-700 border-green-200'}`}
+              onClick={onToggleRole}
+              className={`px-3 py-1 rounded-full text-xs font-semibold border ${currentUserRole === UserRole.ADMIN ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-green-100 text-green-700 border-green-200'}`}
             >
               Current: {currentUserRole}
             </button>
@@ -142,7 +142,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentUserRole, onLogout, toggleRole }
           </div>
           <div className="pt-4 pb-4 border-t border-gray-200">
              <div className="flex items-center px-4">
-               <button onClick={toggleRole} className="text-xs text-primary-600 font-medium">
+               <button onClick={onToggleRole} className="text-xs text-primary-600 font-medium">
                   Switch Role (Current: {currentUserRole})
                </button>
              </div>

@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useMutation } from '@apollo/client';
 import Navbar from './components/Navbar';
 import EmployeeGrid from './components/EmployeeGrid';
 import EmployeeTile from './components/EmployeeTile';
@@ -6,22 +7,18 @@ import EmployeeModal from './components/EmployeeModal';
 import EmployeeFormModal from './components/EmployeeFormModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { Icons } from './components/Icons';
-import { fetchInitialData } from './services/dataGenerator';
-import { MockBackendService } from './services/mockBackend';
-import { Employee, Role, Department, Status, FilterCriteria, PaginatedResponse, SortConfig } from './types';
+import toast, { Toaster } from 'react-hot-toast';
+import { GET_EMPLOYEES, GET_LOCATIONS, ADD_EMPLOYEE, UPDATE_EMPLOYEE, DELETE_EMPLOYEE } from './services/graphql';
+import { Employee, UserRole, Department, Status, SortConfig } from './types';
 
 const App: React.FC = () => {
   // --- State ---
   const [viewMode, setViewMode] = useState<'grid' | 'tile'>('grid');
-  const [currentUserRole, setCurrentUserRole] = useState<Role>(Role.ADMIN);
+  const [currentUserRole, setCurrentUserRole] = useState<UserRole>(UserRole.ADMIN);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   
-  // Backend Simulation State
-  const [backend, setBackend] = useState<MockBackendService | null>(null);
-  const [data, setData] = useState<Employee[]>([]);
-  const [availableLocations, setAvailableLocations] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState({ page: 1, pageSize: 12, total: 0 });
+  // State
+  const [pagination, setPagination] = useState({ page: 1, pageSize: 12 });
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'asc' });
 
   // Filters
@@ -40,48 +37,47 @@ const App: React.FC = () => {
     employee: null
   });
 
-  // --- Initialization ---
-  useEffect(() => {
-    const init = async () => {
-      setLoading(true);
-      const initialData = await fetchInitialData();
-      const service = new MockBackendService(initialData);
-      setBackend(service);
-      setAvailableLocations(service.getLocations());
-      setLoading(false);
-    };
-    init();
-  }, []);
+  // --- GraphQL Queries ---
+  const { data: employeesData, loading, refetch } = useQuery(GET_EMPLOYEES, {
+    variables: {
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      filter: {
+        search: searchQuery || null,
+        department: deptFilter !== 'All' ? deptFilter : null,
+        status: statusFilter !== 'All' ? statusFilter : null,
+        location: locationFilter !== 'All' ? locationFilter : null,
+      },
+      sort: sortConfig,
+    },
+    fetchPolicy: 'network-only',
+  });
 
-  // --- Data Fetching (Simulating GraphQL Query) ---
-  const refreshData = React.useCallback(async () => {
-    if (!backend) return;
-    
-    setLoading(true);
-    const filter: FilterCriteria = {
-      search: searchQuery,
-      department: deptFilter,
-      status: statusFilter,
-      location: locationFilter
-    };
+  const { data: locationsData } = useQuery(GET_LOCATIONS);
 
-    const response = await backend.getEmployees(
-      pagination.page, 
-      pagination.pageSize, 
-      filter, 
-      sortConfig
-    );
+  // --- GraphQL Mutations ---
+  const [addEmployeeMutation] = useMutation(ADD_EMPLOYEE, {
+    onCompleted: () => {
+      refetch();
+    }
+  });
 
-    setData(response.data);
-    setPagination(prev => ({ ...prev, total: response.total }));
-    setAvailableLocations(backend.getLocations());
-    setLoading(false);
-  }, [backend, pagination.page, pagination.pageSize, searchQuery, deptFilter, statusFilter, locationFilter, sortConfig]);
+  const [updateEmployeeMutation] = useMutation(UPDATE_EMPLOYEE, {
+    onCompleted: () => {
+      refetch();
+    }
+  });
 
-  // Trigger fetch when dependencies change
-  useEffect(() => {
-    refreshData();
-  }, [refreshData]);
+  const [deleteEmployeeMutation] = useMutation(DELETE_EMPLOYEE, {
+    onCompleted: () => {
+      refetch();
+    }
+  });
+
+  // Extract data from queries
+  const data = employeesData?.employees?.data || [];
+  const total = employeesData?.employees?.total || 0;
+  const availableLocations = locationsData?.locations || [];
 
   // --- Handlers ---
   
@@ -107,23 +103,26 @@ const App: React.FC = () => {
 
   // Perform Save (Add or Update)
   const handleSaveEmployee = async (formData: Partial<Employee>) => {
-    if (!backend) return;
-    setLoading(true);
     try {
       if (editingEmployee) {
         // Update
-        await backend.updateEmployee({ ...editingEmployee, ...formData } as Employee);
+        await updateEmployeeMutation({
+          variables: {
+            id: editingEmployee.id,
+            ...formData,
+          },
+        });
       } else {
         // Create
-        await backend.createEmployee(formData as any);
+        await addEmployeeMutation({
+          variables: formData,
+        });
       }
       setIsFormOpen(false);
-      refreshData();
+      toast.success(editingEmployee ? 'Employee updated successfully!' : 'Employee added successfully!');
     } catch (err) {
       console.error(err);
-      alert("Failed to save employee");
-    } finally {
-      setLoading(false);
+      toast.error("Failed to save employee. Please try again.");
     }
   };
 
@@ -133,47 +132,49 @@ const App: React.FC = () => {
   };
 
   const handleConfirmDelete = async () => {
-    if (!backend || !deleteConfirmation.employee) return;
-    await backend.deleteEmployee(deleteConfirmation.employee.id);
-    setDeleteConfirmation({ isOpen: false, employee: null });
-    refreshData();
+    if (!deleteConfirmation.employee) return;
+    try {
+      await deleteEmployeeMutation({
+        variables: { id: deleteConfirmation.employee.id },
+      });
+      setDeleteConfirmation({ isOpen: false, employee: null });
+      toast.success('Employee deleted successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete employee. Please try again.");
+    }
   };
 
   const handleFlag = async (e: React.MouseEvent, emp: Employee) => {
     e.stopPropagation();
-    if (!backend) return;
-    // Toggle flag status in DB
-    const updated = { ...emp, isFlagged: !emp.isFlagged };
-    await backend.updateEmployee(updated);
-    refreshData();
+    try {
+      await updateEmployeeMutation({
+        variables: {
+          id: emp.id,
+          isFlagged: !emp.isFlagged,
+        },
+      });
+      toast.success('Employee flag updated!');
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update employee flag");
+    }
   };
 
   const toggleRole = () => {
-    setCurrentUserRole(prev => prev === Role.ADMIN ? Role.EMPLOYEE : Role.ADMIN);
+    setCurrentUserRole(prev => prev === UserRole.ADMIN ? UserRole.EMPLOYEE : UserRole.ADMIN);
   };
 
   // Export to CSV
-  const handleExport = async () => {
-    if (!backend) return;
-    
-    // Get all filtered data (not just current page)
-    const filter: FilterCriteria = {
-      search: searchQuery,
-      department: deptFilter,
-      status: statusFilter,
-      location: locationFilter
-    };
-    
-    const allData = await backend.getAllFiltered(filter);
-    
-    // Convert to CSV
+  const handleExport = () => {
+    // Export current data (all filtered data from current query)
     const headers = ['ID', 'Name', 'Role', 'Department', 'Email', 'Phone', 'Location', 'Status', 'Join Date'];
     const csvContent = [
       headers.join(','),
-      ...allData.map(e => [
+      ...data.map((e: Employee) => [
         e.id, 
         `"${e.name}"`, 
-        `"${e.role}"`, 
+        `"${e.jobTitle}"`, 
         e.department, 
         e.email, 
         e.phone, 
@@ -196,10 +197,32 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#fff',
+            color: '#363636',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
       <Navbar 
         currentUserRole={currentUserRole} 
         onLogout={() => {}} 
-        toggleRole={toggleRole}
+        onToggleRole={toggleRole}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -220,7 +243,7 @@ const App: React.FC = () => {
                <Icons.LogOut className="mr-2 h-4 w-4 text-gray-500" />
                Export CSV
              </button>
-             {currentUserRole === Role.ADMIN && (
+             {currentUserRole === UserRole.ADMIN && (
               <button 
                 onClick={handleAddEmployee}
                 className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
@@ -283,7 +306,7 @@ const App: React.FC = () => {
                  className="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 bg-gray-50 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md focus:bg-white transition-colors"
                >
                  <option value="All">All Locations</option>
-                 {availableLocations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
+                 {availableLocations.map((loc: string) => <option key={loc} value={loc}>{loc}</option>)}
                </select>
             </div>
           </div>
@@ -339,7 +362,7 @@ const App: React.FC = () => {
               <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm text-gray-700">
-                    Showing <span className="font-medium">{(pagination.page - 1) * pagination.pageSize + 1}</span> to <span className="font-medium">{Math.min(pagination.page * pagination.pageSize, pagination.total)}</span> of <span className="font-medium">{pagination.total}</span> results
+                    Showing <span className="font-medium">{(pagination.page - 1) * pagination.pageSize + 1}</span> to <span className="font-medium">{Math.min(pagination.page * pagination.pageSize, total)}</span> of <span className="font-medium">{total}</span> results
                   </p>
                 </div>
                 <div>
@@ -353,7 +376,7 @@ const App: React.FC = () => {
                       <Icons.ChevronDown className="h-5 w-5 rotate-90" />
                     </button>
                     {(() => {
-                        const totalPages = Math.ceil(pagination.total / pagination.pageSize);
+                        const totalPages = Math.ceil(total / pagination.pageSize);
                         let startPage = Math.max(1, pagination.page - 2);
                         let endPage = Math.min(totalPages, startPage + 4);
                         if (endPage - startPage < 4) {
@@ -375,7 +398,7 @@ const App: React.FC = () => {
                     })()}
                     <button
                       onClick={() => setPagination(p => ({...p, page: p.page + 1}))}
-                      disabled={pagination.page * pagination.pageSize >= pagination.total}
+                      disabled={pagination.page * pagination.pageSize >= total}
                       className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                     >
                       <span className="sr-only">Next</span>

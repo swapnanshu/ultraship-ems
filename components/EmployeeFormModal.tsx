@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Employee, Department, Status } from '../types';
+import { Employee, Department, Status, UserRole } from '../types';
 import { Icons } from './Icons';
 
 interface EmployeeFormModalProps {
@@ -26,7 +26,8 @@ const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ isOpen, onClose, 
         setFormData({
           name: '',
           email: '',
-          role: '',
+          jobTitle: '',
+          userRole: UserRole.EMPLOYEE,
           department: Department.ENGINEERING,
           status: Status.ACTIVE,
           phone: '',
@@ -52,13 +53,13 @@ const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ isOpen, onClose, 
       newErrors.email = "Please enter a valid email address";
     }
 
-    // Strict Phone Regex (Min 10 digits, allows +, -, space, brackets)
-    const phoneRegex = /^[\d\s\-\+\(\)]{10,}$/;
-    if (!formData.phone || !phoneRegex.test(formData.phone)) {
-      newErrors.phone = "Phone must be at least 10 characters long and valid";
+    // Indian Phone Validation: +91 followed by 10 digits
+    const phoneRegex = /^(\+91[\s-]?)?[6-9]\d{9}$/;
+    if (!formData.phone || !phoneRegex.test(formData.phone.replace(/[\s-]/g, ''))) {
+      newErrors.phone = "Please enter a valid Indian phone number (+91 followed by 10 digits)";
     }
 
-    if (!formData.role?.trim()) newErrors.role = "Role is required";
+    if (!formData.jobTitle?.trim()) newErrors.jobTitle = "Job title is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -146,17 +147,31 @@ const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ isOpen, onClose, 
                 {errors.phone && <p className="mt-1 text-xs text-red-600">{errors.phone}</p>}
               </div>
 
-              {/* Role */}
+              {/* Role / Job Title */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">Role / Job Title</label>
+                <label className="block text-sm font-medium text-gray-700">Job Title</label>
                 <input
                   type="text"
-                  value={formData.role || ''}
-                  onChange={e => handleChange('role', e.target.value)}
-                  className={`mt-1 block w-full border rounded-md shadow-sm sm:text-sm py-2 px-3 ${errors.role ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'}`}
+                  value={formData.jobTitle || ''}
+                  onChange={e => handleChange('jobTitle', e.target.value)}
+                  className={`mt-1 block w-full border rounded-md shadow-sm sm:text-sm py-2 px-3 ${errors.jobTitle ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'}`}
                   placeholder="Senior Developer"
                 />
-                {errors.role && <p className="mt-1 text-xs text-red-600">{errors.role}</p>}
+                {errors.jobTitle && <p className="mt-1 text-xs text-red-600">{errors.jobTitle}</p>}
+              </div>
+
+              {/* User Role (Access Control) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">User Role</label>
+                <select
+                  value={formData.userRole || UserRole.EMPLOYEE}
+                  onChange={e => handleChange('userRole', e.target.value)}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm py-2 border px-3"
+                >
+                  {Object.values(UserRole).map(r => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
               </div>
 
                {/* Department */}
@@ -236,7 +251,12 @@ const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ isOpen, onClose, 
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-primary-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-sm"
+                disabled={Object.keys(errors).some(key => errors[key])}
+                className={`px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 ${
+                  Object.keys(errors).some(key => errors[key])
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-primary-600 hover:bg-primary-700'
+                }`}
               >
                 {initialData ? 'Update Employee' : 'Create Employee'}
               </button>

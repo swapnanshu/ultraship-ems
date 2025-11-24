@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Employee, Role, Status } from '../types';
+import { Employee, UserRole, Status } from '../types';
 import { Icons } from './Icons';
+import AvatarIcon from './AvatarIcon';
 
 interface EmployeeTileProps {
   data: Employee[];
   isLoading: boolean;
-  userRole: Role;
+  userRole: UserRole;
   onRowClick: (emp: Employee) => void;
   onEdit: (e: React.MouseEvent, emp: Employee) => void;
   onDelete: (e: React.MouseEvent, emp: Employee) => void;
@@ -14,7 +15,7 @@ interface EmployeeTileProps {
 
 const TileCard: React.FC<{ 
   emp: Employee; 
-  userRole: Role;
+  userRole: UserRole;
   onClick: () => void;
   onAction: (e: React.MouseEvent, action: string) => void 
 }> = ({ emp, userRole, onClick, onAction }) => {
@@ -51,7 +52,7 @@ const TileCard: React.FC<{
       )}
 
       {/* Bun Button - Only for Admin */}
-      {userRole === Role.ADMIN && (
+      {userRole === UserRole.ADMIN && (
         <div className="absolute top-3 right-3 z-10">
           <div className="relative">
             <button 
@@ -94,11 +95,7 @@ const TileCard: React.FC<{
       <div className="px-5 pb-5 -mt-10 flex-1 flex flex-col">
         {/* Avatar */}
         <div className="relative">
-            <img 
-              src={emp.avatar} 
-              alt={emp.name} 
-              className="h-20 w-20 rounded-xl border-4 border-white shadow-md bg-white object-cover" 
-            />
+            <AvatarIcon name={emp.name} size={80} />
             <div className={`absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-white ${
               emp.status === Status.ACTIVE ? 'bg-green-500' : 
               emp.status === Status.ON_LEAVE ? 'bg-yellow-500' : 'bg-gray-400'
@@ -107,7 +104,7 @@ const TileCard: React.FC<{
 
         <div className="mt-3">
           <h3 className="text-lg font-bold text-gray-900 group-hover:text-primary-600 transition-colors">{emp.name}</h3>
-          <p className="text-sm text-gray-500">{emp.role}</p>
+          <p className="text-sm text-gray-500">{emp.jobTitle}</p>
         </div>
 
         <div className="mt-4 space-y-2 flex-1">

@@ -12,10 +12,13 @@
     "deploy": "gh-pages -d dist --nojekyll"
   },
   "dependencies": {
+    "@apollo/client": "^3.11.0",
     "@google/genai": "^1.30.0",
+    "graphql": "^16.8.1",
     "lucide-react": "^0.554.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "react-hot-toast": "^2.4.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

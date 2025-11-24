@@ -1,11 +1,12 @@
 import React from 'react';
-import { Employee, Role, Status, SortConfig } from '../types';
+import { Employee, UserRole, Status, SortConfig } from '../types';
 import { Icons } from './Icons';
+import AvatarIcon from './AvatarIcon';
 
 interface EmployeeGridProps {
   data: Employee[];
   isLoading: boolean;
-  userRole: Role;
+  userRole: UserRole;
   sortConfig: SortConfig;
   onSort: (key: keyof Employee) => void;
   onRowClick: (emp: Employee) => void;
@@ -62,15 +63,15 @@ const EmployeeGrid: React.FC<EmployeeGridProps> = ({
           <thead className="bg-gray-50">
             <tr>
               {renderHeader('Employee', 'name')}
-              {renderHeader('ID', 'id')}
-              {renderHeader('Role', 'role')}
+              {renderHeader('ID', 'employeeId')}
+              {renderHeader('Job Title', 'jobTitle')}
               {renderHeader('Department', 'department')}
               {renderHeader('Status', 'status')}
               {renderHeader('Email', 'email')}
               {renderHeader('Phone', 'phone')}
               {renderHeader('Location', 'location')}
               {/* 9. if the user is logged in as Admin then only show the Actions column */}
-              {userRole === Role.ADMIN && (
+              {userRole === UserRole.ADMIN && (
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-50 z-10">
                   Actions
                 </th>
@@ -87,8 +88,8 @@ const EmployeeGrid: React.FC<EmployeeGridProps> = ({
                 {/* Name & Avatar */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10 relative">
-                      <img className="h-10 w-10 rounded-full object-cover" src={emp.avatar} alt="" />
+                    <div className="flex-shrink-0 relative">
+                      <AvatarIcon name={emp.name} size={40} />
                       {emp.isFlagged && (
                         <div className="absolute -top-1 -right-1 bg-red-500 rounded-full p-0.5 border-2 border-white">
                            <Icons.Flag size={10} className="text-white fill-current" />
@@ -102,8 +103,8 @@ const EmployeeGrid: React.FC<EmployeeGridProps> = ({
                   </div>
                 </td>
                 
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">{emp.id}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{emp.role}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">{emp.employeeId}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{emp.jobTitle}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                     {emp.department}
@@ -128,7 +129,7 @@ const EmployeeGrid: React.FC<EmployeeGridProps> = ({
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{emp.location}</td>
 
                 {/* Actions (Admin Only) */}
-                {userRole === Role.ADMIN && (
+                {userRole === UserRole.ADMIN && (
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end space-x-2">
                       <button 

@@ -24,14 +24,18 @@ export const typeDefs = gql`
 
   type Employee {
     id: ID!
+    employeeId: String!
     name: String!
-    role: String!
+    age: Int!
+    jobTitle: String!
+    userRole: String!
     department: String!
     email: String!
     phone: String!
     location: String!
     status: String!
     joinDate: String!
+    subjects: [String!]!
     isFlagged: Boolean!
   }
 
@@ -70,25 +74,31 @@ export const typeDefs = gql`
   type Mutation {
     addEmployee(
       name: String!
-      role: String!
+      age: Int!
+      jobTitle: String!
+      userRole: String
       department: String!
       email: String!
       phone: String!
       location: String!
       status: String!
       joinDate: String!
+      subjects: [String!]
     ): Employee!
 
     updateEmployee(
       id: ID!
       name: String
-      role: String
+      age: Int
+      jobTitle: String
+      userRole: String
       department: String
       email: String
       phone: String
       location: String
       status: String
       joinDate: String
+      subjects: [String!]
       isFlagged: Boolean
     ): Employee!
 

@@ -10,7 +10,7 @@ export const resolvers = {
           query.$or = [
             { name: { $regex: filter.search, $options: 'i' } },
             { email: { $regex: filter.search, $options: 'i' } },
-            { location: { $regex: filter.search, $options: 'i' } },
+            { employeeId: { $regex: filter.search, $options: 'i' } },
           ];
         }
         if (filter.department && filter.department !== 'All') {
